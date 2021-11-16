@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "QuantConnect.ToolBox": {
+      "commandName": "Project",
+      "commandLineArgs": "--app=rdg --start=20210101 --end=20210201 --symbol-count=1 --security-type=option"
+    }
+  }
+}
