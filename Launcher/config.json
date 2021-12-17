@@ -9,7 +9,7 @@
   "environment": "backtesting", // "live-paper", "backtesting", "live-interactive", "live-interactive-iqfeed"
 
   // algorithm class selector
-  "algorithm-type-name": "BasicTemplateFrameworkAlgorithm",
+  "algorithm-type-name": "BacktestChartingAlgorithm",
 
   // Algorithm language selector - options CSharp, Python
   "algorithm-language": "CSharp",
@@ -60,6 +60,8 @@
   "job-user-id": "0",
   "api-access-token": "",
   "job-organization-id": "",
+
+  "data-feed-workers-count": 1,
 
   // live data configuration
   "live-data-url": "ws://www.quantconnect.com/api/v2/live/data/",

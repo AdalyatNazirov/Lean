@@ -93,12 +93,9 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
                 {
                     // %odds of getting a trade tick, for example, a quote:trade ratio of 2 means twice as likely
                     // to get a quote, which means you have a 33% chance of getting a trade => 1/3
-                    var tradeChancePercent = 100 / (1 + Settings.QuoteTradeRatio);
                     nextTick = NextTick(
                         next,
-                        Random.NextBool(tradeChancePercent)
-                            ? TickType.Trade
-                            : TickType.Quote,
+                        TickType.Quote,
                         deviation);
                 }
                 else if (TickTypes.Contains(TickType.Trade))
