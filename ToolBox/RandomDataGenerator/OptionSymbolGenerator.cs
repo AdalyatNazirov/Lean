@@ -56,7 +56,7 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
         public override IEnumerable<Symbol> GenerateAsset()
         {
             // first generate the underlying
-            var underlying = NextSymbol(_underlyingSecurityType, _market);
+            var underlying = Symbol.Create("MSFT", SecurityType.Equity, Market.USA);//NextSymbol(_underlyingSecurityType, _market);
 
             yield return underlying;
 
@@ -76,7 +76,8 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
                 : OptionRight.Put;
 
             // when providing a null option w/ an expiry, it will automatically create the OSI ticker string for the Value
-            yield return Symbol.CreateOption(underlying, _market, underlying.SecurityType.DefaultOptionStyle(), optionRight, strike, expiry);
+            //yield return Symbol.CreateOption(underlying, _market, underlying.SecurityType.DefaultOptionStyle(), optionRight, strike, expiry);
+            yield return SymbolRepresentation.ParseOptionTickerOSI("MSFT  210115P00095000");
         }
 
         /// <summary>

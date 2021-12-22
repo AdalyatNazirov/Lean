@@ -24,16 +24,15 @@ namespace QuantConnect.Algorithm.CSharp
             SetStartDate(2018, 12, 24);
             SetEndDate(2019, 6, 28);
             SetCash(100000);
-            Stock = AddEquity("ZRZ", Resolution.Minute);
+            Stock = AddEquity("MSFT", Resolution.Minute);
 
             var contracts = OptionChainProvider.GetOptionContractList(Stock.Symbol, UtcTime).ToList();
             var a = TickType.Trade;
-            PutOptionSymbol = contracts
-                .Where(c => c.ID.OptionRight == OptionRight.Put)
-                .OrderByDescending(c => c.ID.Date)
-                .First();
-            //PutOptionSymbol = "SPX 190215P02050000";
-            //SymbolRepresentation.ParseOptionTickerOSI("GOOG  151224P00750000")
+            //PutOptionSymbol = contracts
+            //    .Where(c => c.ID.OptionRight == OptionRight.Put)
+            //    .OrderByDescending(c => c.ID.Date)
+            //    .First();
+            PutOptionSymbol = SymbolRepresentation.ParseOptionTickerOSI("MSFT  210115P00095000");
 
             //CallOptionSymbol = contracts
             //    .Where(c => c.ID.OptionRight == OptionRight.Call)
@@ -53,6 +52,7 @@ namespace QuantConnect.Algorithm.CSharp
             //On the Trade Plotter Chart we want 3 series: trades and price:
             //var callOption = new Series("Call", SeriesType.Scatter, 0);
             var putOption = new Series("Put", SeriesType.Scatter, 0);
+            stockPlot.AddSeries(putOption);
             var assetPrice = new Series("Price", SeriesType.Line, 0);
             stockPlot.AddSeries(assetPrice);
             AddChart(stockPlot);
