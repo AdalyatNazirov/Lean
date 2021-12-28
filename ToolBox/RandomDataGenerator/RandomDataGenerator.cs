@@ -50,7 +50,7 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
                 random = new Random(_settings.RandomSeed);
                 randomValueGenerator = new RandomValueGenerator(_settings.RandomSeed);
             }
-            
+
             var symbolGenerator = BaseSymbolGenerator.Create(_settings, randomValueGenerator);
 
             var maxSymbolCount = symbolGenerator.GetAvailableSymbolCount();
@@ -90,8 +90,10 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
                     underlyingSecurity ??= security;
 
                     tickGenerators.Add(
-                        new TickGenerator(_settings, tickTypesPerSecurityType[currentSymbol.SecurityType].ToArray(), security, randomValueGenerator)
-                            .GenerateTicks()
+                        (security.Symbol.SecurityType == SecurityType.Option
+                            ? new TickGenerator(_settings, tickTypesPerSecurityType[currentSymbol.SecurityType].ToArray(), security, randomValueGenerator)
+                            : new FileSourceTickGenerator(_settings, tickTypesPerSecurityType[currentSymbol.SecurityType].ToArray(), security, randomValueGenerator))
+                                .GenerateTicks()
                             .GetEnumerator());
 
                     tickHistories.Add(

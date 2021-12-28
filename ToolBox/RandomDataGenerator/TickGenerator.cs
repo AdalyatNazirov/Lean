@@ -57,7 +57,7 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
             }
         }
 
-        public IEnumerable<Tick> GenerateTicks()
+        public virtual IEnumerable<Tick> GenerateTicks()
         {
             var current = Settings.Start;
 

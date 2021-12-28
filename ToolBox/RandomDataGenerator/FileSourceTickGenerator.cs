@@ -1,8 +1,7 @@
-using System.Collections.Generic;
-using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Data.Market;
 using QuantConnect.Securities;
+using System.Collections.Generic;
 
 namespace QuantConnect.ToolBox.RandomDataGenerator
 {
@@ -11,20 +10,13 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
     /// </summary>
     public class FileSourceTickGenerator : TickGenerator
     {
-        public FileSourceTickGenerator(RandomDataGeneratorSettings settings, TickType[] tickTypes, Symbol symbol)
-            : base(settings, tickTypes, symbol)
+        public FileSourceTickGenerator(RandomDataGeneratorSettings settings, TickType[] tickTypes, Security security, IRandomValueGenerator random)
+            : base(settings, tickTypes, security, random)
         {
         }
 
-        public FileSourceTickGenerator(RandomDataGeneratorSettings settings, TickType[] tickTypes, IRandomValueGenerator random, Symbol symbol)
-            : base(settings, tickTypes, random, symbol)
+        public override IEnumerable<Tick> GenerateTicks()
         {
-        }
-
-        public override IEnumerable<IEnumerable<Tick>> GenerateTicks()
-        {
-            List<Tick> ticks = new List<Tick>();
-
             var marketHoursDataBase = MarketHoursDatabase.FromDataFolder();
             var dataTimeZone = marketHoursDataBase.GetDataTimeZone(Symbol.ID.Market, Symbol, Symbol.SecurityType);
             var exchangeTime = marketHoursDataBase.GetExchangeHours(Symbol.ID.Market, Symbol, Symbol.SecurityType);
@@ -44,21 +36,17 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
 
                 foreach (var datapoint in ldr.Parse())
                 {
-                    ticks.Clear();
-
-                    ticks.Add(new Tick
+                    yield return new Tick
                     {
                         Time = datapoint.Time,
                         Symbol = Symbol,
                         TickType = TickType.Trade,
                         Value = datapoint.Price
-                    });
-                    
-                    yield return ticks;
-                }
+                    };
 
-                // advance to the next time step
-                current = exchangeTime.GetNextMarketOpen(ticks.FirstOrDefault()?.Time ?? current, true);
+                    // advance to the next time step
+                    current = exchangeTime.GetNextMarketOpen(datapoint.Time, true);
+                }
             }
         }
     }
