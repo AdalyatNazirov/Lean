@@ -95,7 +95,7 @@ namespace QuantConnect.ToolBox.RandomDataGenerator
                     // to get a quote, which means you have a 33% chance of getting a trade => 1/3
                     nextTick = NextTick(
                         next,
-                        TickType.Quote,
+                        TickType.Trade,
                         deviation);
                 }
                 else if (TickTypes.Contains(TickType.Trade))
