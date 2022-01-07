@@ -2,7 +2,7 @@
   "profiles": {
     "QuantConnect.ToolBox": {
       "commandName": "Project",
-      "commandLineArgs": "--app=rdg --start=20181224 --end=20190628 --symbol-count=1 --security-type=option"
+      "commandLineArgs": "--app=rdg --start=20181224 --end=20190628 --symbol-count=1 --security-type=option --volatility-model-resolution=Tick"
     }
   }
 }
