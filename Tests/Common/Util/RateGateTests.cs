@@ -11,12 +11,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 using System;
 using NUnit.Framework;
-using QuantConnect.Util;
 using System.Diagnostics;
+using RateGateType = QuantConnect.Util.RateGate;
 
 namespace QuantConnect.Tests.Common.Util
 {
@@ -27,30 +27,33 @@ namespace QuantConnect.Tests.Common.Util
         [TestCase(10)]
         public void RateGateWithTimeout(int count)
         {
-            var rate = TimeSpan.FromMilliseconds(500);
-            using var gate  = new RateGate(1, rate);
-            var timer = Stopwatch.StartNew();
-
-            for (var i = 0; i <= count; i++)
+            TestRateLimit((action) =>
             {
-                Assert.IsTrue(gate.WaitToProceed(TimeSpan.FromSeconds(5)));
-            }
+                for (var i = 0; i <= count; i++)
+                {
+                    action.Invoke();
+                }
+            }, count);
+        }
 
-            timer.Stop();
-
-            var elapsed = timer.Elapsed;
-            var expectedDelay = rate * count;
-            var lowerBound = expectedDelay - expectedDelay * 0.30;
-            var upperBound = expectedDelay + expectedDelay * 0.30;
-
-            Assert.GreaterOrEqual(elapsed, lowerBound, $"RateGate was early: {lowerBound - elapsed}");
-            Assert.LessOrEqual(elapsed, upperBound, $"RateGate was late: {elapsed - upperBound}");
+        [TestCase(5)]
+        [TestCase(10)]
+        public void RateGateWithTimeoutParallel(int count)
+        {
+            TestRateLimit((action) =>
+            {
+                var options = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 5 };
+                System.Threading.Tasks.Parallel.For(0, count + 1, options, i =>
+                {
+                    action.Invoke();
+                });
+            }, count);
         }
 
         [Test]
         public void RateGate_ShouldSkipBecauseOfTimeout()
         {
-            using var gate = new RateGate(1, TimeSpan.FromSeconds(5));
+            using var gate = new RateGateType(1, TimeSpan.FromSeconds(5));
             var timer = Stopwatch.StartNew();
 
             Assert.IsTrue(gate.WaitToProceed(-1));
@@ -65,6 +68,28 @@ namespace QuantConnect.Tests.Common.Util
             timer.Stop();
 
             Assert.LessOrEqual(timer.Elapsed, TimeSpan.FromSeconds(10));
+        }
+
+        private static void TestRateLimit(Action<Action> waitAction, int count)
+        {
+            var rate = TimeSpan.FromMilliseconds(500);
+            using var gate = new RateGateType(1, rate);
+            var timer = Stopwatch.StartNew();
+
+            waitAction.Invoke(() =>
+            {
+                Assert.IsTrue(gate.WaitToProceed(TimeSpan.FromSeconds(5)));
+            });
+
+            timer.Stop();
+
+            var elapsed = timer.Elapsed;
+            var expectedDelay = rate * count;
+            var lowerBound = expectedDelay - expectedDelay * 0.30;
+            var upperBound = expectedDelay + expectedDelay * 0.30;
+
+            Assert.GreaterOrEqual(elapsed, lowerBound, $"RateGate was early: {lowerBound - elapsed}");
+            Assert.LessOrEqual(elapsed, upperBound, $"RateGate was late: {elapsed - upperBound}");
         }
     }
 }
