@@ -169,7 +169,7 @@ namespace QuantConnect.Util
         /// </summary>
         /// <param name="millisecondsTimeout">Number of milliseconds to wait, or -1 to wait indefinitely.</param>
         /// <returns>true if the thread is allowed to proceed, or false if timed out</returns>
-        public bool WaitToProceed(int tokens, int millisecondsTimeout)
+        public bool WaitToProceed(int tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
         {
             // Check the arguments.
             if (millisecondsTimeout < -1)
@@ -179,7 +179,7 @@ namespace QuantConnect.Util
 
             // Block until we can enter the semaphore or timeout expires.
             // The strategy handles its internal queue and returns the timeToExit.
-            var entered = _rateGateStrategy.Wait(tokens, millisecondsTimeout);
+            var entered = _rateGateStrategy.Wait(tokens, millisecondsTimeout, cancellationToken);
             if (entered)
             {
                 lock (_timerLock)
