@@ -34,7 +34,7 @@ public class TokenBucketStrategy : IRateGateStrategy
         _decayTimeoutMilliseconds = decayTimeoutMilliseconds;
     }
 
-    public bool Wait(long tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
+    public bool Wait(int tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
     {
         var startTime = Environment.TickCount;
         lock (_lock)
@@ -60,6 +60,7 @@ public class TokenBucketStrategy : IRateGateStrategy
             {
                 _nextDecayTick = unchecked(Environment.TickCount + _decayTimeoutMilliseconds);
             }
+
             _counter += tokens;
 
             return true;
@@ -71,8 +72,10 @@ public class TokenBucketStrategy : IRateGateStrategy
     /// Ensures the operation observes the provided timeout and supports cancellation via a cancellation token.
     /// </summary>
     /// <param name="millisecondsTimeout">The amount of time, in milliseconds, to wait for the tokens to be available before timing out.</param>
+    /// <param name="cancellationToken">The CancellationToken to observe.</param>
     /// <returns>Returns true if the wait is successful within the allowed timeout; otherwise, returns false.</returns>
-    public bool Wait(int millisecondsTimeout) => Wait(1, millisecondsTimeout);
+    public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken = default) =>
+        Wait(1, millisecondsTimeout, cancellationToken);
 
     /// <summary>
     /// Reduces the accumulated tokens in the token bucket by the decay velocity.

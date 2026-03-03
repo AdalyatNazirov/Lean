@@ -19,6 +19,11 @@ using System.Threading;
 
 namespace QuantConnect.Util.RateLimit;
 
+/// <summary>
+/// Implements a rate-limiting mechanism using a sliding time window approach.
+/// This class enforces a limit on the number of operations that can be executed
+/// within a specified time interval, leveraging synchronization techniques such as semaphores.
+/// </summary>
 public class SlidingWindowLogStrategy : IRateGateStrategy
 {
     private readonly int _timeUnitMilliseconds;
@@ -43,10 +48,11 @@ public class SlidingWindowLogStrategy : IRateGateStrategy
     /// Attempts to enter the semaphore by decrementing its count, waiting up to the specified timeout.
     /// </summary>
     /// <param name="millisecondsTimeout">The number of milliseconds to wait, or -1 to wait indefinitely.</param>
+    /// <param name="cancellationToken">The CancellationToken to observe.</param>
     /// <returns>True if the semaphore count was decremented successfully within the timeout period; otherwise, false.</returns>
-    public bool Wait(int millisecondsTimeout)
+    public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken = default)
     {
-        var entered = _semaphore.Wait(millisecondsTimeout);
+        var entered = _semaphore.Wait(millisecondsTimeout, cancellationToken);
         // If we entered the semaphore, compute the corresponding exit time
         // and add it to the queue.
         if (entered)
@@ -57,7 +63,24 @@ public class SlidingWindowLogStrategy : IRateGateStrategy
                 _exitTimes.Enqueue(timeToExit);
             }
         }
+
         return entered;
+    }
+
+    /// <summary>
+    /// Not supported for the Sliding Window Log Strategy.
+    /// </summary>
+    /// <param name="tokens">The number of tokens required to proceed.</param>
+    /// <param name="millisecondsTimeout">The maximum time, in milliseconds, to wait for permission.</param>
+    /// <returns>True if permission was granted within the timeout; otherwise, false.</returns>
+    public bool Wait(int tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
+    {
+        if (tokens != 1)
+        {
+            throw new NotSupportedException();
+        }
+
+        return Wait(millisecondsTimeout, cancellationToken);
     }
 
     /// <summary>
