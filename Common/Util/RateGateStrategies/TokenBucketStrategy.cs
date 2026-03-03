@@ -16,7 +16,7 @@
 using System;
 using System.Threading;
 
-namespace QuantConnect.Util.RateLimit;
+namespace QuantConnect.Util.RateGateStrategies;
 
 public class TokenBucketStrategy : IRateGateStrategy
 {

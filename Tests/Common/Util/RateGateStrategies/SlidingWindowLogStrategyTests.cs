@@ -16,9 +16,9 @@
 
 using System;
 using NUnit.Framework;
-using QuantConnect.Util.RateLimit;
+using QuantConnect.Util.RateGateStrategies;
 
-namespace QuantConnect.Tests.Common.Util.RateGate;
+namespace QuantConnect.Tests.Common.Util.RateGateStrategies;
 
 [TestFixture, Parallelizable(ParallelScope.Fixtures)]
 public class SlidingWindowLogStrategyTests

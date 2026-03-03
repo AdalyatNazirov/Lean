@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using NUnit.Framework;
-using QuantConnect.Util.RateLimit;
+using QuantConnect.Util.RateGateStrategies;
 
-namespace QuantConnect.Tests.Common.Util.RateGate;
+namespace QuantConnect.Tests.Common.Util.RateGateStrategies;
 
 [TestFixture]
 public class TokenBucketStrategyTests

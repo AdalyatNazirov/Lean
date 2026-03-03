@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace QuantConnect.Util.RateLimit;
+namespace QuantConnect.Util.RateGateStrategies;
 
 /// <summary>
 /// Implements a rate-limiting mechanism using a sliding time window approach.
