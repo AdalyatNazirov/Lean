@@ -167,7 +167,9 @@ namespace QuantConnect.Util
         /// Blocks the current thread until allowed to proceed or until the
         /// specified timeout elapses.
         /// </summary>
+        /// <param name="tokens">The number of tokens required to proceed.</param>
         /// <param name="millisecondsTimeout">Number of milliseconds to wait, or -1 to wait indefinitely.</param>
+        /// <param name="cancellationToken">The CancellationToken to observe.</param>
         /// <returns>true if the thread is allowed to proceed, or false if timed out</returns>
         public bool WaitToProceed(int tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
         {
