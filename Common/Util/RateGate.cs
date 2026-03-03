@@ -53,12 +53,18 @@ namespace QuantConnect.Util
         /// <summary>
         /// Number of occurrences allowed per unit of time.
         /// </summary>
-        public int Occurrences { get; private set; }
+        public int Occurrences
+        {
+            get; private set;
+        }
 
         /// <summary>
         /// The length of the time unit, in milliseconds.
         /// </summary>
-        public int TimeUnitMilliseconds { get; private set; }
+        public int TimeUnitMilliseconds
+        {
+            get; private set;
+        }
 
         /// <summary>
         /// Flag indicating we are currently being rate limited
@@ -81,13 +87,11 @@ namespace QuantConnect.Util
         {
             // Check the arguments.
             if (occurrences <= 0)
-                throw new ArgumentOutOfRangeException(nameof(occurrences),
-                    "Number of occurrences must be a positive integer");
+                throw new ArgumentOutOfRangeException(nameof(occurrences), "Number of occurrences must be a positive integer");
             if (timeUnit != timeUnit.Duration())
                 throw new ArgumentOutOfRangeException(nameof(timeUnit), "Time unit must be a positive span of time");
             if (timeUnit >= TimeSpan.FromMilliseconds(UInt32.MaxValue))
-                throw new ArgumentOutOfRangeException(nameof(timeUnit),
-                    "Time unit must be less than 2^32 milliseconds");
+                throw new ArgumentOutOfRangeException(nameof(timeUnit), "Time unit must be less than 2^32 milliseconds");
 
             Occurrences = occurrences;
             TimeUnitMilliseconds = (int)timeUnit.TotalMilliseconds;
@@ -120,21 +124,21 @@ namespace QuantConnect.Util
             {
                 // While there are exit times that are passed due still in the queue,
                 // exit the semaphore and dequeue the exit time.
-                var nextTimerFireTick = 0;
+                var exitTime = 0;
                 var exitTimeValid = false;
                 var tickCount = Environment.TickCount;
                 lock (_timerLock)
                 {
-                    exitTimeValid = _rateGateStrategy.TryPeekNextFireTick(out nextTimerFireTick);
+                    exitTimeValid = _rateGateStrategy.TryPeekNextFireTick(out exitTime);
                     while (exitTimeValid)
                     {
-                        if (unchecked(nextTimerFireTick - tickCount) > 0)
+                        if (unchecked(exitTime - tickCount) > 0)
                         {
                             break;
                         }
 
                         _rateGateStrategy.Release();
-                        exitTimeValid = _rateGateStrategy.TryPeekNextFireTick(out nextTimerFireTick);
+                        exitTimeValid = _rateGateStrategy.TryPeekNextFireTick(out exitTime);
                     }
 
                     // only schedule if there's someone waiting
@@ -143,7 +147,7 @@ namespace QuantConnect.Util
                         // we are already holding the next item from the queue, do not peek again
                         // although this exit time may have already pass by this stmt.
                         var maxWait = TimeUnitMilliseconds > 0 ? TimeUnitMilliseconds : int.MaxValue;
-                        var timeUntilNextCheck = Math.Min(maxWait, Math.Max(0, nextTimerFireTick - tickCount));
+                        var timeUntilNextCheck = Math.Min(maxWait, Math.Max(0, exitTime - tickCount));
 
                         _exitTimer.Change(timeUntilNextCheck, Timeout.Infinite);
                     }
