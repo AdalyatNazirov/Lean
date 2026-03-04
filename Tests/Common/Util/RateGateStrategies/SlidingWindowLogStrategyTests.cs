@@ -31,7 +31,7 @@ public class SlidingWindowLogStrategyTests
         using var strategy = new SlidingWindowLogStrategy(1, 1, TimeUnitMilliseconds);
         var startTime = Environment.TickCount;
 
-        var result = strategy.Wait(0);
+        var result = strategy.Wait(1, 0);
 
         Assert.IsTrue(result);
         Assert.IsTrue(strategy.TryPeekNextFireTick(out var nextFireTick));
@@ -42,9 +42,9 @@ public class SlidingWindowLogStrategyTests
     public void Wait_ReturnsFalse_WhenCapacityIsReached()
     {
         using var strategy = new SlidingWindowLogStrategy(1, 1, TimeUnitMilliseconds);
-        strategy.Wait(0);
+        strategy.Wait(1, 0);
 
-        var result = strategy.Wait(10);
+        var result = strategy.Wait(1, 10);
 
         Assert.IsFalse(result);
     }
@@ -53,13 +53,13 @@ public class SlidingWindowLogStrategyTests
     public void Release_IncrementsSemaphoreAndDequeuesExitTime()
     {
         using var strategy = new SlidingWindowLogStrategy(1, 1, TimeUnitMilliseconds);
-        strategy.Wait(0);
+        strategy.Wait(1, 0);
         Assert.IsTrue(strategy.TryPeekNextFireTick(out _));
 
         strategy.Release();
 
         Assert.IsFalse(strategy.TryPeekNextFireTick(out _));
-        Assert.IsTrue(strategy.Wait(0));
+        Assert.IsTrue(strategy.Wait(1, 0));
     }
 
     [Test]
@@ -67,7 +67,7 @@ public class SlidingWindowLogStrategyTests
     {
         using var strategy = new SlidingWindowLogStrategy(2, 2, TimeUnitMilliseconds);
         var startTime = Environment.TickCount;
-        strategy.Wait(0);
+        strategy.Wait(1, 0);
         var expectedTick = startTime + TimeUnitMilliseconds;
 
         var result = strategy.TryPeekNextFireTick(out var nextFireTick);
@@ -75,7 +75,7 @@ public class SlidingWindowLogStrategyTests
         Assert.IsTrue(result);
         Assert.GreaterOrEqual(nextFireTick, expectedTick);
         // Ensure it doesn't change on second wait
-        strategy.Wait(0);
+        strategy.Wait(1, 0);
         strategy.TryPeekNextFireTick(out var secondPeek);
         Assert.AreEqual(nextFireTick, secondPeek);
     }
@@ -96,7 +96,7 @@ public class SlidingWindowLogStrategyTests
         var strategy = new SlidingWindowLogStrategy(1, 1, TimeUnitMilliseconds);
         strategy.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => strategy.Wait(0));
+        Assert.Throws<ObjectDisposedException>(() => strategy.Wait(1, 0));
     }
 
     [Test]
@@ -107,13 +107,13 @@ public class SlidingWindowLogStrategyTests
 
         for (int i = 0; i < maxCount; i++)
         {
-            Assert.IsTrue(strategy.Wait(0), $"Failed to wait at index {i}");
+            Assert.IsTrue(strategy.Wait(1, 0), $"Failed to wait at index {i}");
         }
 
-        Assert.IsFalse(strategy.Wait(0), "Should have been limited");
+        Assert.IsFalse(strategy.Wait(1, 0), "Should have been limited");
 
         strategy.Release();
-        Assert.IsTrue(strategy.Wait(0), "Should have been able to wait after release");
-        Assert.IsFalse(strategy.Wait(0), "Should have been limited again");
+        Assert.IsTrue(strategy.Wait(1, 0), "Should have been able to wait after release");
+        Assert.IsFalse(strategy.Wait(1, 0), "Should have been limited again");
     }
 }

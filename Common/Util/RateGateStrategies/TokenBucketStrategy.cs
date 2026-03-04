@@ -27,8 +27,12 @@ public class TokenBucketStrategy : IRateGateStrategy
     private int _nextDecayTick;
     private readonly object _lock = new();
 
+    public int TimeUnitMilliseconds => _decayTimeoutMilliseconds;
+
     public TokenBucketStrategy(int maxThreshold, decimal decayVelocity, int decayTimeoutMilliseconds)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(decayTimeoutMilliseconds, 0);
+
         _maxThreshold = maxThreshold;
         _decayVelocity = decayVelocity;
         _decayTimeoutMilliseconds = decayTimeoutMilliseconds;
@@ -68,16 +72,6 @@ public class TokenBucketStrategy : IRateGateStrategy
     }
 
     /// <summary>
-    /// Waits for a specified duration or until the required tokens are available in the rate-limiting strategy.
-    /// Ensures the operation observes the provided timeout and supports cancellation via a cancellation token.
-    /// </summary>
-    /// <param name="millisecondsTimeout">The amount of time, in milliseconds, to wait for the tokens to be available before timing out.</param>
-    /// <param name="cancellationToken">The CancellationToken to observe.</param>
-    /// <returns>Returns true if the wait is successful within the allowed timeout; otherwise, returns false.</returns>
-    public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken = default) =>
-        Wait(1, millisecondsTimeout, cancellationToken);
-
-    /// <summary>
     /// Reduces the accumulated tokens in the token bucket by the decay velocity.
     /// If the current token count is greater than zero, it decreases the count by the decay velocity.
     /// Ensures that the token count never drops below zero.
@@ -86,19 +80,16 @@ public class TokenBucketStrategy : IRateGateStrategy
     /// </summary>
     public void Release()
     {
-        lock (_lock)
+        if (_counter > 0)
         {
-            if (_counter > 0)
+            _counter -= _decayVelocity;
+            if (_counter < 0)
             {
-                _counter -= _decayVelocity;
-                if (_counter < 0)
-                {
-                    _counter = 0;
-                }
-
-                _nextDecayTick = unchecked(_nextDecayTick + _decayTimeoutMilliseconds);
-                Monitor.PulseAll(_lock);
+                _counter = 0;
             }
+
+            _nextDecayTick = unchecked(_nextDecayTick + _decayTimeoutMilliseconds);
+            Monitor.PulseAll(_lock);
         }
     }
 
@@ -109,13 +100,10 @@ public class TokenBucketStrategy : IRateGateStrategy
     /// <returns>Returns true if a next decay tick is available; otherwise, returns false.</returns>
     public bool TryPeekNextFireTick(out int nextFireTick)
     {
-        lock (_lock)
+        if (_counter > 0)
         {
-            if (_counter > 0)
-            {
-                nextFireTick = _nextDecayTick;
-                return true;
-            }
+            nextFireTick = _nextDecayTick;
+            return true;
         }
 
         nextFireTick = 0;

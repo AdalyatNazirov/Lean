@@ -3,16 +3,15 @@ using System.Threading;
 
 namespace QuantConnect.Util.RateGateStrategies;
 
-public interface IRateGateStrategy: IDisposable
+public interface IRateGateStrategy : IDisposable
 {
     /// <summary>
-    /// Waits for permission to proceed within the configured rate limit.
-    /// Blocks until either the operation is permitted or the specified timeout elapses.
+    /// Gets the duration of the time unit, in milliseconds, used to govern the rate-limiting behavior.
+    /// This property defines the base time measurement used by the rate-limiting strategy for
+    /// managing tokens or requests. Its value may vary depending on the implementing strategy
+    /// (e.g., sliding window or token bucket).
     /// </summary>
-    /// <param name="millisecondsTimeout">The maximum time, in milliseconds, to wait for permission.</param>
-    /// <param name="cancellationToken">The CancellationToken to observe.</param>
-    /// <returns>True if permission was granted within the timeout; otherwise, false.</returns>
-    bool Wait(int millisecondsTimeout, CancellationToken cancellationToken = default);
+    public int TimeUnitMilliseconds { get; }
 
     /// <summary>
     /// Waits for permission to proceed within the configured rate limit.

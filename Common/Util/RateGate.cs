@@ -58,14 +58,6 @@ namespace QuantConnect.Util
         }
 
         /// <summary>
-        /// The length of the time unit, in milliseconds.
-        /// </summary>
-        public int TimeUnitMilliseconds
-        {
-            get; private set;
-        }
-
-        /// <summary>
         /// Flag indicating we are currently being rate limited
         /// </summary>
         public bool IsRateLimited
@@ -93,10 +85,11 @@ namespace QuantConnect.Util
                 throw new ArgumentOutOfRangeException(nameof(timeUnit), "Time unit must be less than 2^32 milliseconds");
 
             Occurrences = occurrences;
-            TimeUnitMilliseconds = (int)timeUnit.TotalMilliseconds;
+
+            var timeUnitMilliseconds = (int)timeUnit.TotalMilliseconds;
 
             // Create the semaphore, with the number of occurrences as the maximum count.
-            _rateGateStrategy = new SlidingWindowLogStrategy(Occurrences, Occurrences, TimeUnitMilliseconds);
+            _rateGateStrategy = new SlidingWindowLogStrategy(Occurrences, Occurrences, timeUnitMilliseconds);
 
             // Create a timer to exit the semaphore. Use the time unit as the original
             // interval length because that's the earliest we will need to exit the semaphore.
@@ -145,8 +138,7 @@ namespace QuantConnect.Util
                     {
                         // we are already holding the next item from the queue, do not peek again
                         // although this exit time may have already pass by this stmt.
-                        var maxWait = TimeUnitMilliseconds > 0 ? TimeUnitMilliseconds : int.MaxValue;
-                        var timeUntilNextCheck = Math.Min(maxWait, Math.Max(0, exitTime - tickCount));
+                        var timeUntilNextCheck = Math.Min(_rateGateStrategy.TimeUnitMilliseconds, Math.Max(0, exitTime - tickCount));
 
                         _exitTimer.Change(timeUntilNextCheck, Timeout.Infinite);
                     }

@@ -34,24 +34,31 @@ public class SlidingWindowLogStrategy : IRateGateStrategy
     private bool _isDisposed;
     private readonly Queue<int> _exitTimes = new();
 
+    public int TimeUnitMilliseconds => _timeUnitMilliseconds;
+
     /// <summary>
     /// Implements a rate-limiting strategy using a sliding window of time
     /// with semaphore to control the number of allowed occurrences.
     /// </summary>
     public SlidingWindowLogStrategy(int initialCount, int maxCount, int timeUnitMilliseconds)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeUnitMilliseconds, 0);
+
         _timeUnitMilliseconds = timeUnitMilliseconds;
         _semaphore = new SemaphoreSlim(initialCount, maxCount);
     }
 
     /// <summary>
-    /// Attempts to enter the semaphore by decrementing its count, waiting up to the specified timeout.
+    /// Not supported for the Sliding Window Log Strategy.
     /// </summary>
-    /// <param name="millisecondsTimeout">The number of milliseconds to wait, or -1 to wait indefinitely.</param>
-    /// <param name="cancellationToken">The CancellationToken to observe.</param>
-    /// <returns>True if the semaphore count was decremented successfully within the timeout period; otherwise, false.</returns>
-    public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken = default)
+    /// <param name="tokens">The number of tokens required to proceed.</param>
+    /// <param name="millisecondsTimeout">The maximum time, in milliseconds, to wait for permission.</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if permission was granted within the timeout; otherwise, false.</returns>
+    public bool Wait(int tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
     {
+        ArgumentOutOfRangeException.ThrowIfNotEqual(tokens, 1);
+
         var entered = _semaphore.Wait(millisecondsTimeout, cancellationToken);
         // If we entered the semaphore, compute the corresponding exit time
         // and add it to the queue.
@@ -68,32 +75,13 @@ public class SlidingWindowLogStrategy : IRateGateStrategy
     }
 
     /// <summary>
-    /// Not supported for the Sliding Window Log Strategy.
-    /// </summary>
-    /// <param name="tokens">The number of tokens required to proceed.</param>
-    /// <param name="millisecondsTimeout">The maximum time, in milliseconds, to wait for permission.</param>
-    /// <returns>True if permission was granted within the timeout; otherwise, false.</returns>
-    public bool Wait(int tokens, int millisecondsTimeout, CancellationToken cancellationToken = default)
-    {
-        if (tokens != 1)
-        {
-            throw new NotSupportedException();
-        }
-
-        return Wait(millisecondsTimeout, cancellationToken);
-    }
-
-    /// <summary>
     /// Releases a single counting semaphore entry, increasing the count of the semaphore by one
     /// and allowing another thread to gain access to a limited resource.
     /// </summary>
     public void Release()
     {
-        lock (_exitTimes)
-        {
-            _semaphore.Release();
-            _exitTimes.Dequeue();
-        }
+        _semaphore.Release();
+        _exitTimes.Dequeue();
     }
 
     /// <summary>
@@ -103,10 +91,7 @@ public class SlidingWindowLogStrategy : IRateGateStrategy
     /// <returns>True if a fire tick is available; otherwise, false.</returns>
     public bool TryPeekNextFireTick(out int fireTick)
     {
-        lock (_exitTimes)
-        {
-            return _exitTimes.TryPeek(out fireTick);
-        }
+        return _exitTimes.TryPeek(out fireTick);
     }
 
     /// <summary>
